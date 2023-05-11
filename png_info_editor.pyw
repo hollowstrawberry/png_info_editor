@@ -46,16 +46,23 @@ def copy_png_info():
     messagebox.showinfo(title="Success", message=f"PNG info copied to {target_file.split('/')[-1]}")
 
 def apply_color(event=None):
-    global textbox
-    textbox.tag_remove("blue", "1.0", "end")
-    lines = textbox.get(1.0, "end").splitlines()
+    global textbox, tags
+    for tag in tags:
+        textbox.tag_remove(tag, "1.0", "end")
+    lines = textbox.get("1.0", "end").splitlines()
     for i, line in enumerate(lines):
-        for match in re.finditer(r"(^|, )([\w ]+):", line):
-            textbox.tag_add("blue", f"{i+1}.{match.start(2)}", f"{i+1}.{match.end(2)}")
+        for tag, pattern in tags.items():
+            for match in re.finditer(pattern, line):
+                textbox.tag_add(tag, f"{i+1}.{match.start(1)}", f"{i+1}.{match.end(1)}")
 
 
 WIDTH = 700
 HEIGHT = 400
+
+tags = {
+    "blue": r"(?:^|, )([\w ]+):",
+    "purple": r"(<\w+:[^>]+>)",
+}
 
 target_file = ""
 
@@ -87,7 +94,9 @@ scrollbar.pack(side="right", fill='y')
 textbox = tk.Text(boxbottom, width=80, height=15, font=("Lucida Sans Typewriter",10), yscrollcommand=scrollbar.set)
 scrollbar.config(command=textbox.yview)
 textbox.pack()
+
 textbox.bind("<KeyRelease>", apply_color)
-textbox.tag_configure("blue", foreground="blue")
+for tag in tags:
+    textbox.tag_configure(tag, foreground=tag)
 
 window.mainloop()
