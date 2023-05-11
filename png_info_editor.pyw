@@ -14,9 +14,11 @@ def select_source_file():
             info = source.info.get("parameters", None)
         if not info:
             return messagebox.showerror(title="Oops", message="No PNG info found in this image.")
+        source_label.config(text=f"{filename.split('/')[-1]}")
+        source_file = filename
         textbox.delete("1.0", "end")
         textbox.insert("1.0", info)
-        apply_color(None)
+        apply_color()
 
 def select_target_file():
     global target_file, target_label
@@ -43,7 +45,7 @@ def copy_png_info():
     target.save(target_file, format="png", pnginfo=pnginfo)
     messagebox.showinfo(title="Success", message=f"PNG info copied to {target_file.split('/')[-1]}")
 
-def apply_color(event):
+def apply_color(event=None):
     global textbox
     textbox.tag_remove("blue", "1.0", "end")
     lines = textbox.get(1.0, "end").splitlines()
