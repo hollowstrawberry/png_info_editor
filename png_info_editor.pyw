@@ -7,14 +7,18 @@ from PIL import Image, PngImagePlugin
 START = "1.0"
 ERROR = "Oops"
 
+params = None
+
 def select_source_file():
-    global source_label, textbox
+    global source_label, textbox, params
     filename = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select source file", filetypes=(("PNG", "*.png"),))
     if filename:
         with Image.open(filename, formats=("png",)) as source:
-            info = source.info.get("parameters", None)
-        if not info:
-            return messagebox.showerror(title="Oops", message="No PNG info found in this image.")
+            if source.info.get("Title", None) == "AI generated image":
+                params = source.info.copy()
+                info = source.info.get("Description", None)
+            else:
+                return messagebox.showerror(title="Oops", message="No NovelAI3 data found in this image.")
         source_label.config(text=f"{filename.split('/')[-1]}")
         textbox.delete(START, tk.END)
         textbox.insert(START, info)
@@ -28,20 +32,23 @@ def select_target_file():
         target_file = filename
 
 def copy_png_info():
-    global target_file, textbox
+    global target_file, textbox, params
     info = textbox.get(START, tk.END).strip()
     if not info:
-        return messagebox.showerror(title=ERROR, message="Please select a file to copy PNG info from, or write your own.")
+        return messagebox.showerror(title=ERROR, message="Please select a file to copy NovelAI3 data from.")
     if not target_file:
-        return messagebox.showerror(title=ERROR, message="Please select a target image to save the PNG info to.")
+        return messagebox.showerror(title=ERROR, message="Please select a target image to save the NovelAI3 data to.")
     try:
         target = Image.open(target_file, formats=("png",))
     except:
         return messagebox.showerror(title=ERROR, message="The target image might've been moved or is invalid.")
+    if not params:
+        return messagebox.showerror(title=ERROR, message="You must first select a source image to copy the original NovelAI3 data from.")
     pnginfo = PngImagePlugin.PngInfo()
-    pnginfo.add_text("parameters", info)
+    for key, val in params.items():
+        pnginfo.add_text(key, val)
     target.save(target_file, format="png", pnginfo=pnginfo)
-    messagebox.showinfo(title="Success", message=f"PNG info copied to {target_file.split('/')[-1]}")
+    messagebox.showinfo(title="Success", message=f"NovelAI3 data copied to {target_file.split('/')[-1]}")
 
 def apply_color(event=None):
     global textbox, tags
@@ -54,14 +61,14 @@ def apply_color(event=None):
                 textbox.tag_add(tag, f"{i+1}.{match.start(1)}", f"{i+1}.{match.end(1)}")
 
 tags = {
-    "blue": r"(?:^|, )([\w ]+):",
-    "purple": r"(<\w+:[^>]+>)",
+    "blue": r"({|})",
+    "dark red": r"(\[|\])",
 }
 
 target_file = ""
 
 window = tk.Tk()
-window.title("PNG Info editor")
+window.title("NovelAI3 prompt editor")
 
 boxtop = tk.Frame(window)
 boxmiddle = tk.Frame(window)
@@ -72,7 +79,7 @@ boxbottom.grid(row=2, padx=5, pady=(0, 10))
 for i in range(5):
     boxmiddle.columnconfigure(i, minsize=100)
 
-tk.Label(boxtop, text="This program lets you copy and edit Stable Diffusion Generation data between images.").pack()
+tk.Label(boxtop, text="This program lets you copy and edit NovelAI3 prompts between images.").pack()
 tk.Button(boxmiddle, text="Copy from image", command=select_source_file).grid(row=0, column=1)
 tk.Button(boxmiddle, text="Select target image", command=select_target_file).grid(row=0, column=3)
 source_label = tk.Label(boxmiddle, text="No file selected.")
