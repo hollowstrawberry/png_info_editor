@@ -47,6 +47,7 @@ def copy_png_info():
     pnginfo = PngImagePlugin.PngInfo()
     for key, val in params.items():
         pnginfo.add_text(key, val)
+    pnginfo.add_text("Description", info)
     target.save(target_file, format="png", pnginfo=pnginfo)
     messagebox.showinfo(title="Success", message=f"NovelAI3 data copied to {target_file.split('/')[-1]}")
 
